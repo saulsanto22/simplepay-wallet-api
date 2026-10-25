@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimplePay - Core Wallet & Transaction Engine</title>
+    <!-- Font Modern Inter dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Header Navbar -->
+    <header class="navbar">
+        <div class="logo-container">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">Simple<span>Pay</span></div>
+        </div>
+        <div class="server-status">
+            <span class="status-dot"></span>
+            Backend Active (Port 8080)
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+
+        <!-- Notifikasi Toast Alert -->
+        <div id="toastNotification" class="toast hidden"></div>
+
+        <!-- Kolom Kiri: Kartu Dompet & Quick Actions -->
+        <section class="left-panel">
+
+            <!-- Pilih / Ganti Dompet Aktif -->
+            <div class="panel-card account-selector-card">
+                <h3>Pilih Akun Dompet Aktif</h3>
+                <div class="selector-group">
+                    <select id="walletSelect" onchange="switchWallet()">
+                        <option value="">-- Pilih Dompet --</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="openModal('createWalletModal')">+ Dompet Baru</button>
+                </div>
+            </div>
+
+            <!-- Kartu Visual Dompet Digital (Neobank Style) -->
+            <div class="credit-card" id="cardVisual">
+                <div class="card-top">
+                    <span class="card-chip"></span>
+                    <span class="card-brand">SimplePay • Debit</span>
+                </div>
+                <div class="card-balance-label">Total Saldo Tersedia</div>
+                <div class="card-balance" id="cardBalanceDisplay">Rp 0</div>
+                <div class="card-bottom">
+                    <div>
+                        <div class="card-label">PEMILIK AKUN</div>
+                        <div class="card-user" id="cardUserDisplay">-</div>
+                    </div>
+                    <div>
+                        <div class="card-label">NO. REKENING (WALLET ID)</div>
+                        <div class="card-id" id="cardIdDisplay">ID: #--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Cepat -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="openModal('topupModal')">
+                    📥 Isi Saldo (Top-Up)
+                </button>
+                <button class="btn btn-accent" onclick="openModal('transferModal')">
+                    💸 Transfer Saldo
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Kolom Kanan: Riwayat Transaksi Buku Kas (Ledger) -->
+        <section class="right-panel">
+            <div class="panel-card ledger-card">
+                <div class="ledger-header">
+                    <h3>Riwayat Mutasi Saldo (Audit Ledger)</h3>
+                    <button class="btn btn-sm btn-outline" onclick="loadTransactions()">🔄 Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>WAKTU</th>
+                                <th>TIPE</th>
+                                <th>NOMINAL</th>
+                                <th>DESKRIPSI</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            <tr>
+                                <td colspan="5" class="empty-state">Pilih atau buat dompet untuk melihat mutasi.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: Buka Akun Dompet Baru -->
+    <div id="createWalletModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Buka Dompet Baru</h3>
+            <p class="modal-desc">Daftarkan akun pengguna baru ke sistem SimplePay.</p>
+            <form onsubmit="handleCreateWallet(event)">
+                <div class="form-group">
+                    <label>User ID / Nama Pengguna:</label>
+                    <input type="text" id="newUserIdInput" placeholder="Contoh: alex-99, rina-01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createWalletModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Daftarkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Top-Up Saldo -->
+    <div id="topupModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Isi Saldo (Top-Up)</h3>
+            <p class="modal-desc">Tambahkan saldo langsung ke dompet yang sedang aktif.</p>
+            <form onsubmit="handleTopUp(event)">
+                <div class="form-group">
+                    <label>Nominal Top-Up (Rupiah):</label>
+                    <input type="number" id="topupAmountInput" placeholder="Minimal 1000" min="1000" step="1000"
+                        required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('topupModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Konfirmasi Top-Up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Transfer Saldo Antar Dompet -->
+    <div id="transferModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Transfer Saldo</h3>
+            <p class="modal-desc">Kirim uang ke dompet pengguna lain secara instan & aman.</p>
+            <form onsubmit="handleTransfer(event)">
+                <div class="form-group">
+                    <label>No. Rekening Penerima (Target Wallet ID):</label>
+                    <input type="number" id="transferTargetIdInput" placeholder="Masukkan ID dompet penerima (misal: 2)"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Nominal Transfer (Rupiah):</label>
+                    <input type="number" id="transferAmountInput" placeholder="Minimal 1000" min="1000" step="1000"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Catatan / Keterangan (Opsional):</label>
+                    <input type="text" id="transferDescInput" placeholder="Contoh: Bayar makan siang">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transferModal')">Batal</button>
+                    <button type="submit" class="btn btn-accent">Kirim Uang Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

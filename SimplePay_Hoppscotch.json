@@ -1,0 +1,264 @@
+[
+  {
+    "v": 2,
+    "name": "SimplePay Wallet API",
+    "folders": [
+      {
+        "v": 2,
+        "name": "1. Wallet Management",
+        "folders": [],
+        "requests": [
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets",
+            "name": "1.1 Buka Dompet Baru (Budi)",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"userId\": \"budi-01\"\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets",
+            "name": "1.2 Buka Dompet Baru (Siti)",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"userId\": \"siti-02\"\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/1",
+            "name": "1.3 Cek Saldo & Detail Dompet 1",
+            "params": [],
+            "headers": [],
+            "method": "GET",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/2",
+            "name": "1.4 Cek Saldo & Detail Dompet 2",
+            "params": [],
+            "headers": [],
+            "method": "GET",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            }
+          }
+        ]
+      },
+      {
+        "v": 2,
+        "name": "2. Transactions (Top-Up & Transfer)",
+        "folders": [],
+        "requests": [
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/1/topup",
+            "name": "2.1 Top-Up Saldo Dompet 1 (Rp 100.000)",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"amount\": 100000.00\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/transfer",
+            "name": "2.2 Transfer Dompet 1 ke Dompet 2 (Rp 35.000)",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"sourceWalletId\": 1,\n  \"targetWalletId\": 2,\n  \"amount\": 35000.00,\n  \"description\": \"Bayar makan siang & kopi\"\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/1/transactions",
+            "name": "2.3 Riwayat Mutasi Dompet 1",
+            "params": [],
+            "headers": [],
+            "method": "GET",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/2/transactions",
+            "name": "2.4 Riwayat Mutasi Dompet 2",
+            "params": [],
+            "headers": [],
+            "method": "GET",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            }
+          }
+        ]
+      },
+      {
+        "v": 2,
+        "name": "3. Error Handling Test Cases",
+        "folders": [],
+        "requests": [
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/transfer",
+            "name": "3.1 Error: Saldo Tidak Cukup (Transfer Rp 1.000.000)",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"sourceWalletId\": 1,\n  \"targetWalletId\": 2,\n  \"amount\": 1000000.00\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/transfer",
+            "name": "3.2 Error: Transfer ke Dompet Sendiri",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"sourceWalletId\": 1,\n  \"targetWalletId\": 1,\n  \"amount\": 10000.00\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets",
+            "name": "3.3 Error: Validasi Input Kosong",
+            "params": [],
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"userId\": \"   \"\n}"
+            }
+          },
+          {
+            "v": "1",
+            "endpoint": "http://localhost:8080/api/wallets/9999",
+            "name": "3.4 Error: Dompet Tidak Ditemukan",
+            "params": [],
+            "headers": [],
+            "method": "GET",
+            "auth": {
+              "authType": "none",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            }
+          }
+        ]
+      }
+    ],
+    "requests": []
+  }
+]
