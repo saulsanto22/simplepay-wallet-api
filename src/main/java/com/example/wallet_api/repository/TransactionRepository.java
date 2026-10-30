@@ -9,10 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-// TODO: Buat interface TransactionRepository yang meng-extends JpaRepository untuk entity Transaction dengan ID tipe Long
+
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // Mengambil semua transaksi masuk & keluar milik sebuah dompet, diurutkan dari yang terbaru
-    @Query("SELECT t FROM Transaction t WHERE t.sourceWallet.id = :walletId OR t.targetWallet.id = :walletId ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Transaction t WHERE (t.sourceWallet.id= :walletId AND t.type = TransactionType.DEBIT) OR (t.targetWallet.id = :walletId AND t.type=TransactionType.CREDIT) ORDER BY t.createdAt DESC")
     List<Transaction> findByWalletIdOrderByCreatedAtDesc(@Param("walletId") Long walletId);
 }

@@ -22,7 +22,7 @@ public class Wallet {
     @Column(name="user_id", nullable = false, unique = true)
     private String userId;
 
-    @Column(name="balance", nullable = false, precision = 18, scale = 4)
+    @Column(name="balance", nullable = false, precision = 19, scale = 4)
     private BigDecimal balance;
 
     @Column(name="created_at", nullable = false, updatable=false)

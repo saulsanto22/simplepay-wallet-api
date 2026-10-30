@@ -16,6 +16,7 @@ import com.example.wallet_api.entity.TransactionStatus;
 import com.example.wallet_api.entity.TransactionType;
 import java.util.List;
 import com.example.wallet_api.dto.request.TransferRequest;
+import com.example.wallet_api.exception.DuplicateResourceException;
 import com.example.wallet_api.exception.InsufficientBalanceException;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,7 @@ public class WalletService {
     public WalletResponse createWallet(CreateWalletRequest request) {
         // Cek apakah user_id sudah memiliki dompet sebelumnya
         if (walletRepository.findByUserId(request.getUserId()).isPresent()) {
-            throw new InvalidTransferException("User dengan ID " + request.getUserId() + " sudah memiliki dompet!");
+            throw new DuplicateResourceException("User dengan ID " + request.getUserId() + " sudah memiliki dompet!");
         }
 
         Wallet wallet = new Wallet();
@@ -53,7 +54,8 @@ public class WalletService {
 
         return WalletResponse.fromEntity(wallet);
     }
-        // 3. Fitur Top-Up Saldo Dompet
+
+    // 3. Fitur Top-Up Saldo Dompet
     @Transactional
     public WalletResponse topUp(Long walletId, TopUpRequest request) {
         // Ambil dompet dengan lock agar saldo aman
@@ -90,7 +92,7 @@ public class WalletService {
                 .toList();
     }
 
-        // 5. Fitur Transfer Saldo Antar Dompet (ACID & Anti-Deadlock)
+    // 5. Fitur Transfer Saldo Antar Dompet (ACID & Anti-Deadlock)
     @Transactional
     public TransactionResponse transfer(TransferRequest request) {
         // 1. Validasi tidak boleh transfer ke diri sendiri
@@ -112,7 +114,8 @@ public class WalletService {
 
         // 3. Validasi kecukupan saldo
         if (sourceWallet.getBalance().compareTo(request.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Saldo dompet pengirim tidak mencukupi! Saldo saat ini: Rp " + sourceWallet.getBalance());
+            throw new InsufficientBalanceException(
+                    "Saldo dompet pengirim tidak mencukupi! Saldo saat ini: Rp " + sourceWallet.getBalance());
         }
 
         // 4. Mutasi Saldo: Kurangi pengirim, tambah penerima
@@ -122,18 +125,47 @@ public class WalletService {
         walletRepository.save(sourceWallet);
         walletRepository.save(targetWallet);
 
-        // 5. Catat mutasi buku kas (Ledger)
-        Transaction tx = new Transaction();
-        tx.setSourceWallet(sourceWallet);
-        tx.setTargetWallet(targetWallet);
-        tx.setAmount(request.getAmount());
-        tx.setType(TransactionType.DEBIT);
-        tx.setStatus(TransactionStatus.SUCCESS);
-        tx.setDescription(request.getDescription() != null ? request.getDescription() : "Transfer antar dompet");
+        // // 5. Catat mutasi buku kas (Ledger)
+        // Transaction tx = new Transaction();
+        // tx.setSourceWallet(sourceWallet);
+        // tx.setTargetWallet(targetWallet);
+        // tx.setAmount(request.getAmount());
+        // tx.setType(TransactionType.DEBIT);
+        // tx.setStatus(TransactionStatus.SUCCESS);
+        // tx.setDescription(request.getDescription() != null ? request.getDescription()
+        // : "Transfer antar dompet");
 
-        Transaction savedTx = transactionRepository.save(tx);
-        return TransactionResponse.fromEntity(savedTx);
+        // Transaction savedTx = transactionRepository.save(tx);
+        // return TransactionResponse.fromEntity(savedTx);
+
+        
+        // 5. Catat mutasi buku kas berpasangan (Double-Entry Ledger)
+        String baseDesc = (request.getDescription() != null && !request.getDescription().isBlank())
+                ? request.getDescription()
+                : "Transfer antar dompet";
+
+        // 5a. Jurnal DEBIT (Uang keluar untuk pengirim)
+        Transaction debitTx = new Transaction();
+        debitTx.setSourceWallet(sourceWallet);
+        debitTx.setTargetWallet(targetWallet);
+        debitTx.setAmount(request.getAmount());
+        debitTx.setType(TransactionType.DEBIT);
+        debitTx.setStatus(TransactionStatus.SUCCESS);
+        debitTx.setDescription(baseDesc + " (Ke Dompet #" + targetWallet.getId() + ")");
+
+        // 5b. Jurnal CREDIT (Uang masuk untuk penerima)
+        Transaction creditTx = new Transaction();
+        creditTx.setSourceWallet(sourceWallet);
+        creditTx.setTargetWallet(targetWallet);
+        creditTx.setAmount(request.getAmount());
+        creditTx.setType(TransactionType.CREDIT);
+        creditTx.setStatus(TransactionStatus.SUCCESS);
+        creditTx.setDescription(baseDesc + " (Dari Dompet #" + sourceWallet.getId() + ")");
+
+        Transaction savedDebitTx = transactionRepository.save(debitTx);
+        transactionRepository.save(creditTx);
+
+        return TransactionResponse.fromEntity(savedDebitTx);
     }
-
 
 }
