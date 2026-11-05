@@ -60,4 +60,10 @@ public class WalletController {
         List<TransactionResponse> response = walletService.getTransactions(id);
         return ResponseEntity.ok(ApiResponse.success("Riwayat transaksi berhasil diambil", response));
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<WalletResponse>>> getAllWallets() {
+        List<WalletResponse> response = walletService.getAllWallets();
+        return ResponseEntity.ok(ApiResponse.success("Daftar dompet berhasil diambil", response));
+    }
 }

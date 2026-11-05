@@ -4,6 +4,7 @@ const API_BASE = '/api/wallets';
 // State aplikasi
 let activeWalletId = null;
 let savedWallets = JSON.parse(localStorage.getItem('simplepay_wallets')) || [1, 2];
+let currentIdempotencyKey = null
 
 // Format Rupiah rapi (contoh: Rp 50.000)
 function formatRupiah(number) {
@@ -27,26 +28,60 @@ function formatDate(dateString) {
     });
 }
 
+// // Inisialisasi saat halaman pertama kali dimuat
+// window.addEventListener('DOMContentLoaded', () => {
+//     renderWalletDropdown();
+//     if (savedWallets.length > 0) {
+//         activeWalletId = savedWallets[0];
+//         document.getElementById('walletSelect').value = activeWalletId;
+//         loadActiveWalletData();
+//     }
+// });
+
+// // 1. Render opsi pilihan dompet di dropdown
+// function renderWalletDropdown() {
+//     const select = document.getElementById('walletSelect');
+//     select.innerHTML = '<option value="">-- Pilih Dompet --</option>';
+//     savedWallets.forEach(id => {
+//         const opt = document.createElement('option');
+//         opt.value = id;
+//         opt.textContent = `Dompet ID: #${id}`;
+//         select.appendChild(opt);
+//     });
+// }
+
 // Inisialisasi saat halaman pertama kali dimuat
 window.addEventListener('DOMContentLoaded', () => {
     renderWalletDropdown();
-    if (savedWallets.length > 0) {
-        activeWalletId = savedWallets[0];
-        document.getElementById('walletSelect').value = activeWalletId;
-        loadActiveWalletData();
-    }
 });
 
-// 1. Render opsi pilihan dompet di dropdown
-function renderWalletDropdown() {
+// 1. Ambil daftar dompet asli dari Backend (GET /api/wallets) & render ke dropdown
+async function renderWalletDropdown() {
     const select = document.getElementById('walletSelect');
     select.innerHTML = '<option value="">-- Pilih Dompet --</option>';
-    savedWallets.forEach(id => {
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.textContent = `Dompet ID: #${id}`;
-        select.appendChild(opt);
-    });
+
+    try {
+        const response = await fetch(API_BASE);
+        const result = await response.json();
+
+        if (result.success && result.data.length > 0) {
+            result.data.forEach(wallet => {
+                const opt = document.createElement('option');
+                opt.value = wallet.id;
+                opt.textContent = `#${wallet.id} - ${wallet.userId}`;
+                select.appendChild(opt);
+            });
+
+            // Jika belum ada dompet aktif yang dipilih, otomatis pilih dompet pertama
+            if (!activeWalletId) {
+                activeWalletId = result.data[0].id;
+            }
+            select.value = activeWalletId;
+            loadActiveWalletData();
+        }
+    } catch (err) {
+        showToast('Gagal memuat daftar dompet: ' + err.message, 'error');
+    }
 }
 
 // 2. Ganti dompet aktif saat dropdown dipilih
@@ -205,7 +240,8 @@ async function handleTransfer(event) {
                 sourceWalletId: activeWalletId,
                 targetWalletId: targetId,
                 amount: amount,
-                description: desc
+                description: desc,
+                idempotencyKey: currentIdempotencyKey
             })
         });
         const result = await response.json();
@@ -228,6 +264,11 @@ async function handleTransfer(event) {
 
 // Helper: Buka & Tutup Modal Pop-up
 function openModal(modalId) {
+
+    if (modalId === 'transferModal') {
+        // Generate idempotency key baru setiap kali modal transfer dibuka
+        currentIdempotencyKey = crypto.randomUUID();
+    }
     document.getElementById(modalId).classList.remove('hidden');
 }
 

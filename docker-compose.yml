@@ -1,0 +1,12 @@
+services:
+  wallet-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: simplepay-wallet-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    restart: unless-stopped
+

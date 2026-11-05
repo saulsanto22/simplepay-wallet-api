@@ -112,6 +112,12 @@ public class WalletService {
         Wallet sourceWallet = request.getSourceWalletId().equals(firstWallet.getId()) ? firstWallet : secondWallet;
         Wallet targetWallet = request.getTargetWalletId().equals(firstWallet.getId()) ? firstWallet : secondWallet;
 
+        if (request.getIdempotencyKey() != null && !request.getIdempotencyKey().isBlank()) {
+            if (transactionRepository.existsByIdempotencyKey(request.getIdempotencyKey())) {
+                throw new DuplicateResourceException("Transaksi ini sudah pernah diproses sebelumnya!");
+            }
+        }
+
         // 3. Validasi kecukupan saldo
         if (sourceWallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
@@ -138,7 +144,6 @@ public class WalletService {
         // Transaction savedTx = transactionRepository.save(tx);
         // return TransactionResponse.fromEntity(savedTx);
 
-        
         // 5. Catat mutasi buku kas berpasangan (Double-Entry Ledger)
         String baseDesc = (request.getDescription() != null && !request.getDescription().isBlank())
                 ? request.getDescription()
@@ -152,6 +157,7 @@ public class WalletService {
         debitTx.setType(TransactionType.DEBIT);
         debitTx.setStatus(TransactionStatus.SUCCESS);
         debitTx.setDescription(baseDesc + " (Ke Dompet #" + targetWallet.getId() + ")");
+        debitTx.setIdempotencyKey(request.getIdempotencyKey());
 
         // 5b. Jurnal CREDIT (Uang masuk untuk penerima)
         Transaction creditTx = new Transaction();
@@ -166,6 +172,15 @@ public class WalletService {
         transactionRepository.save(creditTx);
 
         return TransactionResponse.fromEntity(savedDebitTx);
+    }
+
+    // ambil seluruh daftar dompet (Dropdown for Frontend)
+    @Transactional (readOnly = true)
+    public List<WalletResponse> getAllWallets() {
+        return walletRepository.findAll().stream()
+                .map(WalletResponse::fromEntity)
+                .toList();
+
     }
 
 }

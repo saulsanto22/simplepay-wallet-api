@@ -23,4 +23,15 @@ public class TransferRequest {
     private BigDecimal amount;
 
     private String description;
+
+    private String idempotencyKey;
+
+    //constructor tanpa idempotencyKey
+    public TransferRequest(Long sourceWalletId, Long targetWalletId, BigDecimal amount, String description) {
+        this.sourceWalletId = sourceWalletId;
+        this.targetWalletId = targetWalletId;
+        this.amount = amount;
+        this.description = description; 
+
+    }
 }

@@ -14,4 +14,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t FROM Transaction t WHERE (t.sourceWallet.id= :walletId AND t.type = TransactionType.DEBIT) OR (t.targetWallet.id = :walletId AND t.type=TransactionType.CREDIT) ORDER BY t.createdAt DESC")
     List<Transaction> findByWalletIdOrderByCreatedAtDesc(@Param("walletId") Long walletId);
+
+    // Cek apakah idempotencyKey sudah pernah digunakan sebelumnya
+    boolean existsByIdempotencyKey(String idempotencyKey);
+    
 }
