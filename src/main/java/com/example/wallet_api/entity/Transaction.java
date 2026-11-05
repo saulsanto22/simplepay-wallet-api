@@ -48,6 +48,9 @@ public class Transaction {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name="idempotency_key", unique = true)
+    private String idempotencyKey;
+
     // TODO: Buat method @PrePersist untuk mengisi createdAt dengan waktu saat ini (LocalDateTime.now())
     @PrePersist
     protected void onCreate() {
